@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<test>
+    <!-- language=JAVA -->
+    <java>
+        @J2TsType
+        class SimpleType {
+            public int getInt() {
+                return 5;
+            }
+        }
+    </java>
+    <!-- language=TypeScript -->
+    <typescript>
+        /**
+         * Generated from SimpleType
+         */
+        export interface SimpleType {
+            int: number;
+        }
+    </typescript>
+</test>

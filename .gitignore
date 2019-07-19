@@ -107,3 +107,7 @@ buildNumber.properties
 !.idea/evosec-eclipseformatter.xml
 !.idea/externalDependencies.xml
 !.idea/saveactions_settings.xml
+
+
+# Keep Maven Wrapper jar
+!.mvn/wrapper/maven-wrapper.jar
