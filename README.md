@@ -1,4 +1,4 @@
-# J2TS - Java to TypeScript
+# J2TS - Java to TypeScript [![](https://jitpack.io/v/eu.sourceway/j2ts.svg)](https://jitpack.io/#eu.sourceway/j2ts)
 
 ## What is J2TS?
 The goal J2TS is to provide an annotation processor that generates TypeScript interfaces out of Java classes. 
