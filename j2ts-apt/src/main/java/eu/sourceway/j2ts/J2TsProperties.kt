@@ -5,27 +5,29 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
-import java.util.*
+import java.util.Properties
 import javax.annotation.processing.ProcessingEnvironment
 import javax.tools.StandardLocation
+
+private const val MAX_CONFIG_DEPTH = 5
 
 class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
 
     private val options = processingEnv.options
     private val properties = Properties()
-    private val paths by lazy { findProjectPaths() }
+    private val projectTarget by lazy { findProjectTarget() }
 
     init {
-        val message = options["j2ts.config"]
-        if (message != null) {
-            File(message).inputStream().use {
+        val configFile = options["j2ts.config"] ?: findConfig(projectTarget)?.absolutePath
+        if (configFile != null) {
+            File(configFile).inputStream().use {
                 properties.load(it)
             }
         }
     }
 
     fun outputTarget(): String {
-        return opt("output-target", paths.projectTarget.resolve("generated-typescript").absolutePath)
+        return opt("output-target", projectTarget.resolve("generated-typescript").absolutePath)
     }
 
     fun outputFile(): String {
@@ -33,7 +35,7 @@ class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
     }
 
     fun generationTarget(): String {
-        return opt("generation-target", paths.projectTarget.resolve("generated-typescript").absolutePath)
+        return opt("generation-target", projectTarget.resolve("generated-typescript").absolutePath)
     }
 
     private fun opt(key: String, defaultVal: String): String {
@@ -42,7 +44,16 @@ class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
                 ?: defaultVal
     }
 
-    private fun findProjectPaths(): Paths {
+    private tailrec fun findConfig(where: File, level: Int = 0): File? {
+        val defaultFile = where.resolve(".j2ts")
+        return when {
+            defaultFile.isFile -> defaultFile
+            level > MAX_CONFIG_DEPTH || where.parentFile == null -> null
+            else -> findConfig(where.parentFile, level + 1)
+        }
+    }
+
+    private fun findProjectTarget(): File {
         val dummySourceFile = try {
             processingEnv.filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "dummy" + System.currentTimeMillis())
         } catch (ignored: IOException) {
@@ -67,14 +78,7 @@ class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
 
         val dummyFile = File(cleanURI)
         val sourcesGenerationFolder = dummyFile.parentFile
-        val projectTarget = sourcesGenerationFolder?.parentFile
-        val projectRoot = projectTarget?.parentFile
 
-        return Paths(
-                projectTarget ?: throw FileNotFoundException(),
-                projectRoot ?: throw FileNotFoundException()
-        )
+        return sourcesGenerationFolder?.parentFile ?: throw FileNotFoundException()
     }
-
-    private data class Paths(val projectTarget: File, val projectRoot: File)
 }
