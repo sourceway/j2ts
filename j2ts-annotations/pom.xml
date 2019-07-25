@@ -5,7 +5,7 @@
     <parent>
         <groupId>eu.sourceway</groupId>
         <artifactId>j2ts</artifactId>
-        <version>0.0.2-SNAPSHOT</version>
+        <version>0.0.2</version>
     </parent>
 
     <artifactId>j2ts-annotations</artifactId>
