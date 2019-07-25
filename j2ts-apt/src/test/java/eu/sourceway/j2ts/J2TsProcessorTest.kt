@@ -2,23 +2,19 @@ package eu.sourceway.j2ts
 
 import eu.sourceway.j2ts.sample.AnotherPojo
 import eu.sourceway.j2ts.sample.Pojo
-import eu.sourceway.j2ts.sample.broken.PojoWithoutTypeAnnotation
-import eu.sourceway.j2ts.sample.broken.PropertyAnnotationOnNonGetter
-import eu.sourceway.j2ts.utils.ProcessorTestHelper
+import eu.sourceway.j2ts.utils.KtProcessorTestHelper
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
-import java.io.File
 
 
-class J2TsProcessorTest : ProcessorTestHelper() {
+class J2TsProcessorTest : KtProcessorTestHelper() {
 
     @Rule
     @JvmField
     val name = TestName()
 
-    private val javaTemp = File("target/test-java-tmp/")
 
     @Before
     fun setUp() {
@@ -26,7 +22,6 @@ class J2TsProcessorTest : ProcessorTestHelper() {
         addProcessorParameter("j2ts.generation.target", "target/test-ts-gen/${name.methodName}")
         addProcessorParameter("j2ts.output.target", "target/test-ts-out")
         addProcessorParameter("j2ts.output.file", "${name.methodName}.ts")
-        javaTemp.mkdir()
     }
 
     @Test
@@ -37,17 +32,36 @@ class J2TsProcessorTest : ProcessorTestHelper() {
 
     @Test
     fun `error on getter with property annotation in non annotated type`() {
-        val result = compileFiles(PojoWithoutTypeAnnotation::class.java)
+        val (result, file) = compileSource(name.methodName, """
+public class PojoWithoutTypeAnnotation {
+
+    @J2TsProperty(type = "number")
+    public int getFive() {
+        return 5;
+    }
+}
+""".trimIndent())
+
         assertCompilationError(result)
         assertCompilationErrorCount(1, result)
-        assertCompilationErrorOn(PojoWithoutTypeAnnotation::class.java, "public int getFive()", result)
+        assertCompilationErrorOn(file, "public int getFive()", result)
     }
 
     @Test
     fun `error on non-getter with property annotation`() {
-        val result = compileFiles(PropertyAnnotationOnNonGetter::class.java)
+        val (result, file) = compileSource(name.methodName, """
+@J2TsType
+public class PropertyAnnotationOnNonGetter {
+
+	@J2TsProperty(type = "number")
+	public int notAGetter() {
+		return 5;
+	}
+}
+""".trimIndent())
+
         assertCompilationError(result)
         assertCompilationErrorCount(1, result)
-        assertCompilationErrorOn(PropertyAnnotationOnNonGetter::class.java, "public int notAGetter()", result)
+        assertCompilationErrorOn(file, "public int notAGetter()", result)
     }
 }
