@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>eu.sourceway</groupId>
+        <groupId>eu.sourceway.j2ts</groupId>
         <artifactId>j2ts</artifactId>
         <version>0.0.3-SNAPSHOT</version>
     </parent>
