@@ -18,7 +18,7 @@
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
-            <groupId>eu.sourceway</groupId>
+            <groupId>eu.sourceway.j2ts</groupId>
             <artifactId>j2ts-annotations</artifactId>
             <version>${project.version}</version>
         </dependency>
