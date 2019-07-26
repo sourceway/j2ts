@@ -4,12 +4,12 @@
 
     <groupId>eu.sourceway.j2ts</groupId>
     <artifactId>j2ts</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.4</version>
     <packaging>pom</packaging>
 
     <scm>
         <developerConnection>scm:git:https://github.com/sourceway/j2ts.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>0.0.4</tag>
     </scm>
 
     <modules>
