@@ -13,47 +13,59 @@ private const val MAX_CONFIG_DEPTH = 5
 
 class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
 
-    private val options = processingEnv.options
     private val properties = Properties()
-    private val projectTarget by lazy { findProjectTarget() }
+    private val generatedSourcesTarget by lazy { findGeneratedSourcesTarget() }
+    private val projectRoot by lazy { findProjectRoot(generatedSourcesTarget) }
 
     init {
-        val configFile = options["j2ts.config"] ?: findConfig(projectTarget)?.absolutePath
-        if (configFile != null) {
-            File(configFile).inputStream().use {
-                properties.load(it)
-            }
+        if (projectRoot.hasConfig) {
+            projectRoot.configFile.inputStream().use { stream -> properties.load(stream) }
         }
     }
 
-    fun outputTarget(): String {
-        return opt("output-target", projectTarget.resolve("generated-typescript").absolutePath)
+    private fun outputTarget(): File {
+        return targetDirectory("output-target", "typescript-out")
     }
 
-    fun outputFile(): String {
-        return opt("output-file", "models.ts")
+    fun outputFile(): File {
+        val fileName = properties["output-file"]?.toString() ?: "generated.ts"
+        return outputTarget().resolve(fileName).absoluteFile.normalize()
     }
 
-    fun generationTarget(): String {
-        return opt("generation-target", projectTarget.resolve("generated-typescript").absolutePath)
+    fun generationTarget(): File {
+        return targetDirectory("generation-target", "typescript-gen")
     }
 
-    private fun opt(key: String, defaultVal: String): String {
-        return options["j2ts.${key.replace("-", ".")}"]
-                ?: properties[key]?.toString()
-                ?: defaultVal
+    private fun targetDirectory(propertyKey: String, defaultTarget: String): File {
+        val outputTarget = properties[propertyKey]?.toString()
+                ?: return generatedSourcesTarget.resolve(defaultTarget).absoluteFile.apply { mkdirs() }
+
+        val file = File(outputTarget)
+        if (file.isAbsolute) {
+            return file.apply { mkdirs() }
+        }
+
+        return projectRoot.directory.resolve(outputTarget).absoluteFile.normalize().apply { mkdirs() }
     }
 
-    private tailrec fun findConfig(where: File, level: Int = 0): File? {
-        val defaultFile = where.resolve(".j2ts")
+    private data class ProjectRoot(val directory: File, val hasConfig: Boolean) {
+        val configFile: File
+            get() = directory.resolve(".j2ts")
+    }
+
+    private tailrec fun findProjectRoot(where: File, level: Int = 0): ProjectRoot {
+        val pomXml = where.resolve("pom.xml")
+        val j2tsConfig = where.resolve(".j2ts")
+        val buildGradle = where.resolve("build.gradle")
         return when {
-            defaultFile.isFile -> defaultFile
-            level > MAX_CONFIG_DEPTH || where.parentFile == null -> null
-            else -> findConfig(where.parentFile, level + 1)
+            j2tsConfig.isFile -> ProjectRoot(where, true)
+            pomXml.isFile || buildGradle.isFile -> ProjectRoot(where, false)
+            level > MAX_CONFIG_DEPTH || where.parentFile == null -> throw IllegalStateException("unable to find project root")
+            else -> findProjectRoot(where.parentFile, level + 1)
         }
     }
 
-    private fun findProjectTarget(): File {
+    private fun findGeneratedSourcesTarget(): File {
         val dummySourceFile = try {
             processingEnv.filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "dummy" + System.currentTimeMillis())
         } catch (ignored: IOException) {
@@ -79,6 +91,6 @@ class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
         val dummyFile = File(cleanURI)
         val sourcesGenerationFolder = dummyFile.parentFile
 
-        return sourcesGenerationFolder?.parentFile ?: throw FileNotFoundException()
+        return sourcesGenerationFolder?.parentFile?.absoluteFile ?: throw FileNotFoundException()
     }
 }

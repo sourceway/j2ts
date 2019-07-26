@@ -2,7 +2,6 @@ package eu.sourceway.j2ts
 
 import eu.sourceway.j2ts.annotations.J2TsProperty
 import eu.sourceway.j2ts.annotations.J2TsType
-import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
@@ -23,9 +22,6 @@ class J2TsProcessor : AbstractProcessor() {
             return false
         }
 
-        val tsTarget = File(properties.generationTarget())
-        tsTarget.mkdirs()
-
         roundEnv.getElementsAnnotatedWith(J2TsProperty::class.java)
                 .asSequence()
                 .map { it as ExecutableElement }
@@ -42,6 +38,7 @@ class J2TsProcessor : AbstractProcessor() {
                     }
                 }
 
+        val generationTarget = properties.generationTarget()
         roundEnv.getElementsAnnotatedWith(J2TsType::class.java)
                 .asSequence()
                 .map { it as TypeElement }
@@ -49,7 +46,7 @@ class J2TsProcessor : AbstractProcessor() {
                     val name = e.getAnnotation(J2TsType::class.java)?.name ?: ""
                     val targetName = if (name.isNotBlank()) name else e.simpleName
 
-                    tsTarget.resolve("$targetName.ts").apply {
+                    generationTarget.resolve("$targetName.ts").apply {
                         writeText("/**\n * Generated from ${e.qualifiedName}\n */\n")
                         appendText("export interface $targetName {\n")
 
@@ -72,15 +69,12 @@ class J2TsProcessor : AbstractProcessor() {
                     }
                 }
 
-        val outputTarget = File(properties.outputTarget())
-        outputTarget.mkdirs()
-
-        outputTarget.resolve(properties.outputFile()).apply {
+        properties.outputFile().apply {
             writeText("/* tslint:disable */\n")
             appendText("/* eslint-disable */\n")
             appendText("\n")
 
-            tsTarget.listFiles { f -> f != this }
+            generationTarget.listFiles { f -> f != this }
                     ?.map { it.readText() }
                     ?.joinToString("\n") { it }
                     ?.apply { appendText(this) }
