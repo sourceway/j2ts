@@ -45,8 +45,9 @@ class J2TsProcessor : AbstractProcessor() {
                 .forEach { e ->
                     val name = e.getAnnotation(J2TsType::class.java)?.name ?: ""
                     val targetName = if (name.isNotBlank()) name else e.simpleName
+                    val pkgName = e.qualifiedName.toString().substringBeforeLast(".")
 
-                    generationTarget.resolve("$targetName.ts").apply {
+                    generationTarget.resolve("$pkgName.$targetName.ts").apply {
                         writeText("/**\n * Generated from ${e.qualifiedName}\n */\n")
                         appendText("export interface $targetName {\n")
 
@@ -69,16 +70,21 @@ class J2TsProcessor : AbstractProcessor() {
                     }
                 }
 
-        properties.outputFile().apply {
-            writeText("/* tslint:disable */\n")
-            appendText("/* eslint-disable */\n")
-            appendText("\n")
+        generationTarget.listFiles { f -> f.name.endsWith(".ts") }
+                .orEmpty().asSequence()
+                .filterNotNull()
+                .groupBy { it.name.substringBeforeLast(".").substringBeforeLast(".") }
+                .forEach { (pkg, files) ->
+                    properties.outputTarget().resolve("$pkg.ts").apply {
+                        writeText("/* tslint:disable */\n")
+                        appendText("/* eslint-disable */\n")
+                        appendText("\n")
 
-            generationTarget.listFiles { f -> f != this }
-                    ?.map { it.readText() }
-                    ?.joinToString("\n") { it }
-                    ?.apply { appendText(this) }
-        }
+                        files.map { it.readText() }
+                                .joinToString("\n") { it }
+                                .apply { appendText(this) }
+                    }
+                }
 
         return true
     }

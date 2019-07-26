@@ -23,13 +23,8 @@ class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
         }
     }
 
-    private fun outputTarget(): File {
+    fun outputTarget(): File {
         return targetDirectory("output-target", "typescript-out")
-    }
-
-    fun outputFile(): File {
-        val fileName = properties["output-file"]?.toString() ?: "generated.ts"
-        return outputTarget().resolve(fileName).absoluteFile.normalize()
     }
 
     fun generationTarget(): File {
