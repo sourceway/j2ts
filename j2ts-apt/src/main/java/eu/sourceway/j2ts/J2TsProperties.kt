@@ -14,6 +14,7 @@ private const val MAX_CONFIG_DEPTH = 5
 class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
 
     private val properties = Properties()
+    private val options = processingEnv.options
     private val generatedSourcesTarget by lazy { findGeneratedSourcesTarget() }
     private val projectRoot by lazy { findProjectRoot(generatedSourcesTarget) }
 
@@ -32,7 +33,8 @@ class J2TsProperties(private val processingEnv: ProcessingEnvironment) {
     }
 
     private fun targetDirectory(propertyKey: String, defaultTarget: String): File {
-        val outputTarget = properties[propertyKey]?.toString()
+        val outputTarget = options["j2ts.${propertyKey.replace("-", ".")}"]
+                ?: properties[propertyKey]?.toString()
                 ?: return generatedSourcesTarget.resolve(defaultTarget).absoluteFile.apply { mkdirs() }
 
         val file = File(outputTarget)
