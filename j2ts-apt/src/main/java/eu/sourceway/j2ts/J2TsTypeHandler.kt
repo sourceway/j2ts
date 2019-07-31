@@ -7,10 +7,19 @@ import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
+import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeKind
+import javax.lang.model.type.TypeMirror
 
 class J2TsTypeHandler(private val typeEl: TypeElement, private val processingEnv: ProcessingEnvironment) {
     private inline val TypeElement.packageName get() = this.qualifiedName.toString().substringBeforeLast(".")
+    private fun TypeMirror.asTypeElement() = processingEnv.typeUtils.asElement(this) as? TypeElement
+
+    private val collectionTypes = listOf(
+            "java.util.List", "java.util.List<E>",
+            "java.util.Set", "java.util.Set<E>",
+            "java.util.Map", "java.util.Map<K,V>"
+    )
 
     private val targetName by lazy {
         val name = typeEl.getAnnotation(J2TsType::class.java)?.name ?: ""
@@ -68,29 +77,6 @@ $fieldsSrc
     private fun buildFieldMeta(el: ExecutableElement): FieldMeta {
         val methodAnnotation: J2TsProperty? = el.getAnnotation(J2TsProperty::class.java)
 
-        var propertyType = methodAnnotation?.type
-        var import = ""
-
-        if (propertyType.isNullOrBlank()) {
-            val returnElement = processingEnv.typeUtils.asElement(el.returnType) as? TypeElement
-            val annotation = returnElement?.getAnnotation(J2TsType::class.java)
-
-            propertyType = annotation?.name
-
-            if (annotation != null && typeEl.packageName != returnElement.packageName) {
-                val substringAfterLast = if (propertyType.isNullOrBlank()) returnElement.simpleName else propertyType
-                import = "import {$substringAfterLast} from './${returnElement.packageName}';"
-            }
-        }
-
-        if (propertyType.isNullOrBlank()) {
-            propertyType = TypeMappings[el.returnType]
-        }
-
-        if (propertyType.isNullOrBlank()) {
-            propertyType = el.returnType.toString().substringAfterLast(".")
-        }
-
         val ignore = methodAnnotation?.ignore ?: false
         val optional = methodAnnotation?.optional ?: false
 
@@ -102,6 +88,65 @@ $fieldsSrc
             }
         }.decapitalize()
 
+        val (propertyType, import) = determinePropertyType(el.returnType, methodAnnotation)
         return FieldMeta(propertyName, propertyType, optional, ignore, import)
+    }
+
+    private fun determinePropertyType(typeMirror: TypeMirror, methodAnnotation: J2TsProperty? = null): Pair<String, String> {
+        var propertyType = methodAnnotation?.type
+        var import = ""
+
+        if (propertyType.isNullOrBlank()) {
+            val (isCollectionType, typeArguments) = isCollectionType(typeMirror)
+            if (isCollectionType) {
+                when {
+                    typeArguments.size == 1 -> {
+                        val (arrayType, arrayImport) = determinePropertyType(typeArguments[0])
+                        propertyType = "$arrayType[]"
+                        import = arrayImport
+                    }
+                    typeArguments.size == 2 -> {
+                        val (keyType, keyImport) = determinePropertyType(typeArguments[0])
+                        val (valueType, valueImport) = determinePropertyType(typeArguments[1])
+                        propertyType = "{ [key: $keyType]: $valueType; }"
+                        import = keyImport + "\n" + valueImport
+                    }
+                    else -> throw IllegalStateException("expected to have 1 or 2 typeArguments, got ${typeArguments.size}")
+                }
+            }
+        }
+
+        if (propertyType.isNullOrBlank()) {
+            val returnElement = typeMirror.asTypeElement()
+            val annotation = returnElement?.getAnnotation(J2TsType::class.java)
+
+            propertyType = annotation?.name
+
+            if (annotation != null && typeEl.packageName != returnElement.packageName) {
+                val substringAfterLast = if (propertyType.isNullOrBlank()) returnElement.simpleName else propertyType
+                import = "import {$substringAfterLast} from './${returnElement.packageName}';"
+            }
+        }
+
+        if (propertyType.isNullOrBlank()) {
+            propertyType = TypeMappings[typeMirror]
+        }
+
+        if (propertyType.isNullOrBlank()) {
+            propertyType = typeMirror.toString().substringAfterLast(".")
+        }
+
+        return Pair(propertyType, import)
+    }
+
+    private fun isCollectionType(returnType: TypeMirror): Pair<Boolean, List<TypeMirror>> {
+        val returnElement = returnType.asTypeElement() ?: return Pair(false, emptyList())
+
+        if (("$returnElement" in collectionTypes || returnElement.interfaces.any { "$it" in collectionTypes })
+                && returnType is DeclaredType) {
+            return Pair(true, returnType.typeArguments)
+        }
+
+        return Pair(false, emptyList())
     }
 }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<test>
+    <!-- language=JAVA -->
+    <java>
+        <![CDATA[
+        import java.util.List;
+        import java.util.ArrayList;
+        import java.util.Set;
+        import java.util.HashSet;
+
+        @J2TsType
+        class SimpleType {
+            public List<String> getList() {
+                return new ArrayList<>();
+            }
+
+            public ArrayList<String> getArrayList() {
+                return new ArrayList<>();
+            }
+
+            public Set<String> getSet() {
+                return new HashSet<>();
+            }
+
+            public HashSet<String> getHashSet() {
+                return new HashSet<>();
+            }
+        }
+        ]]>
+    </java>
+    <!-- language=TypeScript -->
+    <typescript>
+        /**
+         * Generated from SimpleType
+         */
+        export interface SimpleType {
+            list: string[];
+            arrayList: string[];
+            set: string[];
+            hashSet: string[];
+        }
+    </typescript>
+</test>

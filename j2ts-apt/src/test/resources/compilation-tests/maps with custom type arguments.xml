@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<test>
+    <!-- language=JAVA -->
+    <java>
+        <![CDATA[
+        import java.util.Map;
+        import java.util.HashMap;
+
+        @J2TsType
+        class CollectionKey {
+        }
+
+        @J2TsType
+        class CollectionValue {
+        }
+
+        @J2TsType
+        class SimpleType {
+            public Map<CollectionKey, CollectionValue> getMap() {
+                return new HashMap<>();
+            }
+
+            public HashMap<CollectionKey, CollectionValue> getHashMap() {
+                return new HashMap<>();
+            }
+        }
+        ]]>
+    </java>
+    <!-- language=TypeScript -->
+    <typescript>
+        import {CollectionKey} from './CollectionKey';
+        import {CollectionValue} from './CollectionValue';
+
+        /**
+         * Generated from SimpleType
+         */
+        export interface SimpleType {
+            map: { [key: CollectionKey]: CollectionValue; };
+            hashMap: { [key: CollectionKey]: CollectionValue; };
+        }
+    </typescript>
+</test>
