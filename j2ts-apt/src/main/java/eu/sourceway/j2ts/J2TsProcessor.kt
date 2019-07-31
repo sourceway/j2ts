@@ -63,9 +63,10 @@ class J2TsProcessor : AbstractProcessor() {
                         files.forEach { file ->
                             val readLines = file.readLines()
                             val (imports, code) = readLines.partition { it.startsWith("import ") }
+                            val trimmedCode = code.toMutableList().apply { removeIf { it.isBlank() } }
 
                             allImports.addAll(imports)
-                            allCodeBlocks.add(code.joinToString("\n"))
+                            allCodeBlocks.add(trimmedCode.joinToString("\n"))
                         }
 
                         allImports.asSequence()
@@ -81,6 +82,8 @@ class J2TsProcessor : AbstractProcessor() {
                         allCodeBlocks.asSequence()
                                 .joinToString("\n\n") { it }
                                 .apply { appendText(this) }
+                        
+                        appendText("\n")
                     }
                 }
 
