@@ -61,7 +61,7 @@ class CompilationTests(
     fun setUp() {
         addProcessor(J2TsProcessor::class.java)
         addProcessorParameter("j2ts.generation.target", "target/test-ts-gen/$name")
-        addProcessorParameter("j2ts.output.target", "target/test-ts-out")
+        addProcessorParameter("j2ts.output.target", "target/test-ts-out/$name")
         addProcessorParameter("j2ts.output.file", "$name.ts")
     }
 
@@ -71,7 +71,7 @@ class CompilationTests(
         val result = compileSource(name, java)
         assertCompilationSuccessful(result.compileResult)
 
-        val readText = File("target/test-ts-out/$name.ts").readText()
+        val readText = File("target/test-ts-out/$name/SimpleType.ts").readText()
 
         assertEquals("/* tslint:disable */\n/* eslint-disable */\n\n$typescript\n", readText)
     }
