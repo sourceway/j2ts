@@ -15,11 +15,6 @@ val TypeMappings = object : ITypeMappings {
     init {
         register(String::class.java, "string")
 
-        register(Long::class.java, "number")
-        register(Int::class.java, "number")
-        register(Integer::class.java, "number")
-        register(Float::class.java, "number")
-        register(Double::class.java, "number")
         register(BigDecimal::class.java, "number")
         register(BigInteger::class.java, "number")
 
@@ -27,6 +22,10 @@ val TypeMappings = object : ITypeMappings {
         register("int", "number")
         register("float", "number")
         register("double", "number")
+        register("java.lang.Long", "number")
+        register("java.lang.Integer", "number")
+        register("java.lang.Float", "number")
+        register("java.lang.Double", "number")
     }
 
     override operator fun get(type: TypeMirror): String? = types[type.toString()]

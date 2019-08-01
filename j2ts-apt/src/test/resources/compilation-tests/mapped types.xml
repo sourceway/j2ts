@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<test>
+    <!-- language=JAVA -->
+    <java>
+        <![CDATA[
+        import java.util.List;
+        import java.util.ArrayList;
+        import java.util.Set;
+        import java.util.HashSet;
+
+        @J2TsType
+        class SimpleType {
+
+            public double getDoubleVal() {
+                return 0D;
+            }
+
+            public float getFloatVal() {
+                return 0F;
+            }
+
+            public int getIntVal() {
+                return 0;
+            }
+
+            public long getLongVal() {
+                return 0L;
+            }
+
+            public Double getDoubleVal2() {
+                return 0D;
+            }
+
+            public Float getFloatVal2() {
+                return 0F;
+            }
+
+            public Integer getIntVal2() {
+                return 0;
+            }
+
+            public Long getLongVal2() {
+                return 0L;
+            }
+        }
+        ]]>
+    </java>
+    <!-- language=TypeScript -->
+    <typescript>
+        /**
+         * Generated from SimpleType
+         */
+        export interface SimpleType {
+            doubleVal: number;
+            floatVal: number;
+            intVal: number;
+            longVal: number;
+            doubleVal2: number;
+            floatVal2: number;
+            intVal2: number;
+            longVal2: number;
+        }
+    </typescript>
+</test>
