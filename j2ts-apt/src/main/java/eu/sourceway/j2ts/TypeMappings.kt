@@ -26,6 +26,7 @@ val TypeMappings = object : ITypeMappings {
         register("java.lang.Integer", "number")
         register("java.lang.Float", "number")
         register("java.lang.Double", "number")
+        register("java.lang.Boolean", "boolean")
     }
 
     override operator fun get(type: TypeMirror): String? = types[type.toString()]
