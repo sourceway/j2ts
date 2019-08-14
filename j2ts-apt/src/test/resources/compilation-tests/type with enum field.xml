@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<test>
+    <!-- language=JAVA -->
+    <java>
+        @J2TsType
+        enum SimpleEnum {
+            A, B, C
+        }
+
+        @J2TsType
+        class SimpleType {
+            public SimpleEnum getSimpleEnum() {
+                return SimpleEnum.A;
+            }
+        }
+    </java>
+    <!-- language=TypeScript -->
+    <typescript>
+        import {SimpleEnum} from './SimpleEnum';
+
+        /**
+         * Generated from SimpleType
+         */
+        export interface SimpleType {
+            simpleEnum: SimpleEnum;
+        }
+    </typescript>
+</test>

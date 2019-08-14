@@ -1,5 +1,6 @@
-package eu.sourceway.j2ts
+package eu.sourceway.j2ts.handler
 
+import eu.sourceway.j2ts.TypeMappings
 import eu.sourceway.j2ts.annotations.J2TsProperty
 import eu.sourceway.j2ts.annotations.J2TsType
 import javax.annotation.processing.ProcessingEnvironment
@@ -11,22 +12,13 @@ import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeKind
 import javax.lang.model.type.TypeMirror
 
-class J2TsTypeHandler(private val typeEl: TypeElement, private val processingEnv: ProcessingEnvironment) {
-    private inline val TypeElement.packageName get() = this.qualifiedName.toString().substringBeforeLast(".")
-    private fun TypeMirror.asTypeElement() = processingEnv.typeUtils.asElement(this) as? TypeElement
+class J2TsClassHandler(private val typeEl: TypeElement, private val processingEnv: ProcessingEnvironment) : AbstractTypeHandler(typeEl, processingEnv) {
 
     private val collectionTypes = listOf(
             "java.util.List", "java.util.List<E>",
             "java.util.Set", "java.util.Set<E>",
             "java.util.Map", "java.util.Map<K,V>"
     )
-
-    private val targetName by lazy {
-        val name = typeEl.getAnnotation(J2TsType::class.java)?.name ?: ""
-        return@lazy if (name.isNotBlank()) name else typeEl.simpleName
-    }
-
-    val fileName = "${typeEl.packageName}.$targetName.ts"
 
     private fun parseFields(): List<FieldMeta> {
         return processingEnv.elementUtils
@@ -56,7 +48,7 @@ class J2TsTypeHandler(private val typeEl: TypeElement, private val processingEnv
         return qualifiedName != Any::class.java.canonicalName
     }
 
-    fun generateCode(): String {
+    override fun generateCode(): String {
         val fields = parseFields()
 
         val imports = fields.map { it.import }.distinct().joinToString("\n")

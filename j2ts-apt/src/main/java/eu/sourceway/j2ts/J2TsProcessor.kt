@@ -2,9 +2,12 @@ package eu.sourceway.j2ts
 
 import eu.sourceway.j2ts.annotations.J2TsProperty
 import eu.sourceway.j2ts.annotations.J2TsType
+import eu.sourceway.j2ts.handler.J2TsClassHandler
+import eu.sourceway.j2ts.handler.J2TsEnumHandler
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.type.TypeKind
@@ -40,8 +43,14 @@ class J2TsProcessor : AbstractProcessor() {
         roundEnv.getElementsAnnotatedWith(J2TsType::class.java)
                 .asSequence()
                 .map { it as TypeElement }
-                .forEach { e ->
-                    val tsTypeHandler = J2TsTypeHandler(e, processingEnv)
+                .map {
+                    when (it.kind) {
+                        ElementKind.ENUM -> J2TsEnumHandler(it, processingEnv)
+                        ElementKind.CLASS -> J2TsClassHandler(it, processingEnv)
+                        else -> throw IllegalStateException("ElementKind ${it.kind} of type ${it.qualifiedName} not supported.")
+                    }
+                }
+                .forEach { tsTypeHandler ->
                     generationTarget.resolve(tsTypeHandler.fileName).apply {
                         writeText(tsTypeHandler.generateCode())
                     }
@@ -82,7 +91,7 @@ class J2TsProcessor : AbstractProcessor() {
                         allCodeBlocks.asSequence()
                                 .joinToString("\n\n") { it }
                                 .apply { appendText(this) }
-                        
+
                         appendText("\n")
                     }
                 }
