@@ -8,7 +8,7 @@ class J2TsEnumHandler(private val typeEl: TypeElement, private val processingEnv
     override fun generateCode(): String {
         val fieldsSrc = typeEl.enclosedElements.asSequence()
                 .filter { it.kind == ElementKind.ENUM_CONSTANT }
-                .joinToString("\n") { "    $it," }
+                .joinToString("\n") { "    $it = '$it'," }
 
         return """
 /**
